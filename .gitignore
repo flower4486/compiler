@@ -1,9 +1,8 @@
 *.o
-./output/*
 parser.*
 
 mind
-/output/*
+*.s
 src/stack.hh
 src/scanner.cpp
 src/position.hh
