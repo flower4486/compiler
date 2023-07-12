@@ -1,0 +1,11 @@
+*.o
+./output/*
+parser.*
+
+mind
+/output/*
+src/stack.hh
+src/scanner.cpp
+src/position.hh
+src/location.hh
+
