@@ -176,7 +176,7 @@ void Translation::visit(ast::IfExpr *s) {
     //正确分支代码
     s->true_brch->accept(this);
     //多加一步
-    if(ctrl_changliang) tr->genAssigni(temp, s->true_brch->ATTR(value));
+    if(ctrl_const) tr->genAssigni(temp, s->true_brch->ATTR(value));
     else tr->genAssign(temp, s->true_brch->ATTR(val));
     
     //jump跳到出口
@@ -184,7 +184,7 @@ void Translation::visit(ast::IfExpr *s) {
     //genMarkLable:标记错误分支地址
     tr->genMarkLabel(L1);
     s->false_brch->accept(this);
-    if(ctrl_changliang) tr->genAssigni(temp, s->false_brch->ATTR(value));
+    if(ctrl_const) tr->genAssigni(temp, s->false_brch->ATTR(value));
     else tr->genAssign(temp, s->false_brch->ATTR(val));
     
     tr->genMarkLabel(L2);
@@ -262,7 +262,7 @@ void Translation::visit(ast::ForStmt *s) {
     else{
         Temp temp = tr->getNewTempI4();
         // tr->genAssigni(temp, 1);
-        if(ctrl_changliang) tr->genAssigni(temp, 1);
+        if(ctrl_const) tr->genAssigni(temp, 1);
         else tr->genAssign(temp, tr->genLoadImm4(1));
         tr->genJumpOnZero(L2, temp);
     }
@@ -425,7 +425,7 @@ void Translation::visit(ast::AndExpr *e) {
     //e->ATTR(val)= tr->genLAnd(e->e1->ATTR(val), e->e2->ATTR(val));
     tr->genJump(L2);
     tr->genMarkLabel(L1);
-    if(ctrl_changliang) tr->genAssigni(temp, 0);
+    if(ctrl_const) tr->genAssigni(temp, 0);
     else tr->genAssign(temp, tr->genLoadImm4(0));
     
     //e->ATTR(val)= tr->genLoadImm4(0);
@@ -442,7 +442,7 @@ void Translation::visit(ast::OrExpr *e) {
     Label L2=tr->getNewLabel();
     e->e1->accept(this);
     tr->genJumpOnZero(L1,e->e1->ATTR(val));
-    if(ctrl_changliang) tr->genAssigni(temp, 1);
+    if(ctrl_const) tr->genAssigni(temp, 1);
     else tr->genAssign(temp, tr->genLoadImm4(1));
     // tr->genAssigni(temp, 1);
     

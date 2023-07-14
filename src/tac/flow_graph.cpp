@@ -325,7 +325,6 @@ void FlowGraph::simplify(void) {
         case BasicBlock::BY_JZERO:
             ++_bbs[_bbs[i]->next[1]]->in_degree;
             // falls through
-
         case BasicBlock::BY_JUMP:
             ++_bbs[_bbs[i]->next[0]]->in_degree;
             break;
@@ -350,9 +349,10 @@ void FlowGraph::simplify(void) {
 
         if (b->cancelled || b->end_kind == BasicBlock::BY_RETURN)
             continue;
-
+        //b是一个可达块
         // forwards all the empty jumps
         trace = _bbs[b->next[0]];
+        //找到当前不可达块的后继可达块
         while (trace->cancelled)
             trace = _bbs[trace->next[0]]; // "trace" must be a BY_JUMP block
                                           // (why? :-)
@@ -371,12 +371,9 @@ void FlowGraph::simplify(void) {
         } else
             b->next[1] = b->next[0];
     }
-
-    // this is a demo, so we don't do the above steps iteratively
-    // shrinks the flow graph (and adjusts the block numbers)
     std::unordered_map<int, int> new_num; // old bb_num -> new bb_num
     int sz = 0;                           // new size
-
+    //将被标记为cancelled从流图中删除，并且调整生于块号
     for (int i = 0; i < _n; ++i) {
         if (!_bbs[i]->cancelled) {
             new_num[i] = sz;
@@ -388,7 +385,7 @@ void FlowGraph::simplify(void) {
 
     _n = sz;
     _bbs.resize(_n);
-
+    //更新所有跳转指令的目标块号为调整之后的
     for (int i = 0; i < _n; ++i) {
         _bbs[i]->bb_num = new_num[_bbs[i]->bb_num];
 

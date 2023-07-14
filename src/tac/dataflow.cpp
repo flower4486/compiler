@@ -208,16 +208,12 @@ void FlowGraph::analyzeLiveness(void) {
     for (int i = 0; i < _n; ++i) {
         getBlock(i)->computeDefAndLiveUse();
     }
-
     // Step 2. iterates
-
     changed = true;
     while (changed) {
         changed = false;
-
         for (reverse_iterator rit = rbegin(); rit != rend(); ++rit) {
             b = *rit;
-
             // updates LiveOut
             switch (b->end_kind) {
             case BasicBlock::BY_JUMP:
@@ -230,10 +226,8 @@ void FlowGraph::analyzeLiveness(void) {
                 b2 = getBlock(b->next[1]);
                 b->LiveOut = b1->LiveIn->unionWith(b2->LiveIn);
                 break;
-
             case BasicBlock::BY_RETURN:
                 break;
-
             default:
                 mind_assert(false); // unreachable
             }
@@ -273,7 +267,6 @@ void BasicBlock::analyzeLiveness(void) {
     // Step 1. locates the last Tac
     for (t = tac_chain; t->next != NULL; t = t->next)
         ;
-
     // Step 2. begins with LiveOut of the block
     t->LiveOut = LiveOut->clone();
     if (end_kind == BY_JZERO || end_kind == BY_RETURN)
@@ -342,7 +335,7 @@ void BasicBlock::analyzeLiveness(void) {
         //     t->op_code!=Tac::STORE&&
         //     t->op_code!=Tac::CALL&&
         //     t->LiveOut->empty()) t->mark=1;
-        if(mind::ctrl_sidaima&&t->op_code!=Tac::PUSH1&&
+        if(mind::ctrl_dead_code&&t->op_code!=Tac::PUSH1&&
             t->op_code!=Tac::PUSH&&
             t->op_code!=Tac::STORE&&
             t->op_code!=Tac::CALL&&

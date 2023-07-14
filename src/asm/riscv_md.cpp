@@ -51,10 +51,10 @@ int regs[18]={RiscvReg::T0,
               RiscvReg::S10,RiscvReg::S11};
 
 //额滴优化
-bool mind::ctrl_sidaima=true;
+bool mind::ctrl_dead_code=true;
 bool mind::ctrl_kongzhiliu=true;
-bool mind::ctrl_changliang=true;
-bool mind::ctrl_jicunqi=true;
+bool mind::ctrl_const=true;
+bool mind::ctrl_register=true;
 bool mind::ctrl_qiangduxueruo=true;
 void alloc(tac::BasicBlock *b);
 std::list<Tac> mind::canlian;
@@ -676,11 +676,6 @@ void RiscvDesc::emitFuncty(Functy f) {
     if (Option::getLevel() == Option::DATAFLOW) {
         std::cout << "Control-flow Graph of " << f->entry << ":" << std::endl;
         g->dump(std::cout);
-        // TO STUDENTS: You might not want to get lots of outputs when
-        // debugging.
-        //              You can enable the following line so that the program
-        //              will terminate after the first Functy is done.
-        // std::exit(0);
         return;
     }
 
@@ -980,9 +975,7 @@ void RiscvDesc::simplePeephole(RiscvInstr *iseq) {
 //寄存器分配针对的是基本块内部
 int RiscvDesc::getRegForRead(Temp v, int avoid1, LiveSet *live) {
     std::ostringstream oss;
-
-    
-    if(ctrl_jicunqi){
+    if(ctrl_register){
         if(v->reg!=-1&&_reg[v->reg]->var == v){
             // _reg[v->reg]->var = v;
             _reg[v->reg]->var=v;
@@ -991,7 +984,6 @@ int RiscvDesc::getRegForRead(Temp v, int avoid1, LiveSet *live) {
         else{
             // std::cout<<"2222";
             int i;
-
             i = RiscvReg::A5;
             if(i==avoid1){
                 i=RiscvReg::A6;
@@ -1017,7 +1009,6 @@ int RiscvDesc::getRegForRead(Temp v, int avoid1, LiveSet *live) {
 //原始暴力算法
         //因为我们要读寄存器，所以这个寄存器肯定之前被分配了，村了一个变量，不然我们读他干嘛
         int i = lookupReg(v);
-
         if (i < 0) {
             // we wil load the content into some register
             i = lookupReg(NULL);
@@ -1064,7 +1055,7 @@ int RiscvDesc::getRegForRead(Temp v, int avoid1, LiveSet *live) {
 //第一个参数，待分配的变量，第二个参数，我不想要那个参数，第三个参数，我不想要哪个，不想要的真多
 //第四个参数，用活跃性分析的结果来争夺寄存器。
 int RiscvDesc::getRegForWrite(Temp v, int avoid1, int avoid2, LiveSet *live) {
-    if(ctrl_jicunqi){
+    if(ctrl_register){
         if(v->reg!=-1){
             _reg[v->reg]->var = v;
             _reg[v->reg]->dirty = true;
@@ -1092,7 +1083,6 @@ int RiscvDesc::getRegForWrite(Temp v, int avoid1, int avoid2, LiveSet *live) {
 
         if (i < 0) {
             i = lookupReg(NULL);
-
             if (i < 0) {
                 i = selectRegToSpill(avoid1, avoid2, live);
                 spillReg(i, live);
@@ -1116,6 +1106,7 @@ int RiscvDesc::getRegForWrite(Temp v, int avoid1, int avoid2, LiveSet *live) {
  *   if the variable contained in $i is no longer alive,
  *   we don't save it into memory.
  */
+//将活跃变量存入内存
 void RiscvDesc::spillReg(int i, LiveSet *live) {
     std::ostringstream oss;
 
@@ -1150,12 +1141,12 @@ void RiscvDesc::spillDirtyRegs(LiveSet *live) {
         if ((NULL != _reg[i]->var) && _reg[i]->dirty &&
             live->contains(_reg[i]->var))
             break;
-
+        //如果这个寄存器被占用，而且其中的变量不在liveout中，就要将其寄存器清空
         _reg[i]->var = NULL;
         _reg[i]->dirty = false;
     }
 
-    //执行这一步代表有要spill的，所以我们进行遍历，利用spillreg处理
+    //执行这一步代表有寄存器需要要spill的，所以我们进行遍历，利用spillreg处理
     if (i < RiscvReg::TOTAL_NUM) {
         addInstr(RiscvInstr::COMMENT, NULL, NULL, NULL, 0, EMPTY_STR,
                  "(save modified registers before control flow changes)");
@@ -1190,7 +1181,7 @@ int RiscvDesc::lookupReg(tac::Temp v) {
  *   number of the selected register
  */
 int RiscvDesc::selectRegToSpill(int avoid1, int avoid2, LiveSet *live) {
-    if(ctrl_jicunqi){
+    if(ctrl_register){
         //先看看有没有和平的方式
         for (int i = 0; i < RiscvReg::TOTAL_NUM; ++i) {
             //遇到general寄存器跳过，函数参数用
@@ -1306,7 +1297,6 @@ bool color() {
 		if (nodes.empty())
 			return true;
 
-	
 		Temp n = NULL;
 		for (Temp t : nodes) {
 			if (nodeDeg[t] < 18) {
@@ -1314,9 +1304,7 @@ bool color() {
 				break;
 			}
 		}
-
 		if (n != NULL) {
-			
 			removeNode(n);
 			bool subColor = color();
 			n->reg = chooseAvailableRegister(n);
@@ -1343,21 +1331,12 @@ void addEdge(Temp a, Temp b) {
 		nodeDeg.insert({b, nodeDeg[b] + 1});
 	}
 
-
-
-
-
-
-
-
-
 void makeNodes(BasicBlock *b) {
         auto c=b->LiveUse;
 		
         for(auto i=c->begin();i!=c->end();i++){
             addNode(*i);
         }
-        
 		for (auto tac = b->tac_chain; tac != NULL; tac = tac->next) {
 			switch (tac->op_code) {
 				case Tac::ADD: 
