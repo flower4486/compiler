@@ -226,18 +226,7 @@ DeclStmt    : Type IDENTIFIER DouList SEMICOLON
                 { $$ = new ast::VarDecl(std::string("const"),$3, $2, $4,$6, $7,POS(@1)); }
             ;
 
-IndexExpr3   : LBRACK ICONST RBRACK IndexExpr3 
-                { $$ = $4;
-                  $$->append_my($2);
-                }
-            | LBRACK ICONST RBRACK
-                { $$ = new ast::DimList();
-                  $$->append_my($2);
-                }
-            
-            ;
-
-
+            // 数组右边的大括号，用来给数组初始化
 IndexExpr1   : /* EMPTY */
                 {$$ = new ast::ExprList();} 
             | COMMA Expr IndexExpr1
@@ -263,16 +252,6 @@ IndexExpr1   : /* EMPTY */
                 }
             ;
 
-InitVal:
-	Expr								{$$ = new InitVal_EXP(POS(@1), InitVal_EXP); $$->son.push_back($1);}
-	|LBRACE RBRACE						{$$ = new InitVal_NULL(POS(@1), InitVal_NULL);}
-	|LBRACE InitVals RBRACE				{$$ = new Initval_(POS(@1), InitVal_); $$->son.push_back($2);}
-;
-
-InitVals:
-	InitVal							{$$ = new Initvals_(POS(@1)); $$->son.push_back($1);}
-	|InitVals COMMA InitVal			{$1->son.push_back($3);}
-;
 
 DouList     : /* EMPTY */
                 {$$ = new ast::DouList();} 
@@ -299,7 +278,7 @@ VarRef      : IDENTIFIER
                 { $$ = new ast::VarRef($1, $2, POS(@1)); }
             ;
 
-
+// 数组中括号中的表达式，用来定义数组维度和长度
 IndexExpr2   : LBRACK Expr RBRACK IndexExpr2
                 { $$ = new ast::IndexExpr($2, $4->expr_list, POS(@1)); }
             | LBRACK Expr RBRACK

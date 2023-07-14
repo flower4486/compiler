@@ -41,28 +41,13 @@ Translation::Translation(tac::TransHelper *helper) {
  */
 void Translation::visit(ast::Program *p) {
     if(!mind::aa.empty()){
-        // std::cout<<mind::aa.size();
-        // if(*(aa.begin())!=NULL){
-        //     std::cout<<"Dfs";
-        // }
-            // std::cout<<(*(aa.begin()))->getName();
         for(auto it:mind::aa){
             it->attachEntryLabel(tr->getNewEntryLabel(it));
         }
-        // for(auto it=mind::aa.begin();it!=mind::aa.end();it++){
-        //     (*it)->attachEntryLabel(tr->getNewEntryLabel((*it)));
-        // }
-        // std::cout<<"fd";
     }
-    
     for (auto it = p->func_and_globals->begin();
          it != p->func_and_globals->end(); ++it)
         (*it)->accept(this);
-    
-        // Function *v = (Function *)scopes->lookup("getint", p->getLocation(),false);
-        // if(v!=NULL){
-        //     v->attachEntryLabel(tr->getNewEntryLabel(v));
-        // }
     
 }
 
@@ -619,10 +604,7 @@ void Translation::visit(ast::CallExpr *e) {
         }
         e->ATTR(val) = tr->genCall(e->ATTR(sym)->getEntryLabel());
         assert(e->ATTR(val) != NULL);
-    }
-
-    
-    
+    }    
 }
 
 /* Translating an ast::VarRef node.
@@ -633,7 +615,6 @@ void Translation::visit(ast::CallExpr *e) {
  */
 
 void Translation::visit(ast::IndexExpr *e){
-    
     if(e->ATTR(dim)!=NULL){
         auto expr = e->expr_list->begin();
         auto dim = e->ATTR(dim)->begin();
@@ -659,7 +640,6 @@ void Translation::visit(ast::IndexExpr *e){
         e->ATTR(val) = temp;
     }
     else{
-        
         auto expr = e->expr_list->begin();
         (*expr)->accept(this);
         Temp temp = (*expr)->ATTR(val); ++expr;
@@ -685,29 +665,8 @@ void Translation::visit(ast::VarRef *ref) {
 /* Translating an ast::VarDecl node.
  */
 void Translation::visit(ast::VarDecl *decl) {
-    
     if(decl->ATTR(sym)->isGlobalVar()){
         if(decl->type->ATTR(type)->isArrayType()){
-            // if(decl->ATTR(sym)->rdim==NULL){
-            //     int a=decl->ATTR(sym)->getType()->getSize();
-            //     decl->ATTR(sym)->rdim=new ast::DimList();
-            //     // std::cout<<a;
-            //     while(a>0){
-            //         decl->ATTR(sym)->rdim->append_my(0);
-            //         a-=4;
-            //     }
-            // }
-            // else{
-            //     int a=decl->ATTR(sym)->getType()->getSize();
-            //     int b=decl->ATTR(sym)->rdim->length();
-            //     if(a>b){
-            //         int c=a-b;
-            //         while(c>0){
-            //             decl->ATTR(sym)->rdim->append(0);
-            //             c-=4;
-            //         }
-            //     }
-            // }
         }
         else{
             
@@ -719,7 +678,6 @@ void Translation::visit(ast::VarDecl *decl) {
             else{
                 //decl->ATTR(sym)->setGlobalInit(0);
                 decl->init->accept(this);
-                
                 if(decl->init->getKind() == ast::ASTNode::INT_CONST)
                 {
                     decl->ATTR(sym)->setGlobalInit(((ast::IntConst *)(decl->init))->value);
@@ -735,9 +693,7 @@ void Translation::visit(ast::VarDecl *decl) {
                 // assert(decl->init->getKind() == ast::ASTNode::INT_CONST);
                 // decl->ATTR(sym)->setGlobalInit(((ast::IntConst *)(decl->init))->value);
             }
-        }
-        
-        
+        }       
     }
     else{
         if(decl->type->ATTR(type)->isArrayType()){
@@ -759,18 +715,15 @@ void Translation::visit(ast::VarDecl *decl) {
             decl->ATTR(sym)->attachTemp(tr->getNewTempI4());
             if(decl->init!=NULL){
                 decl->init->accept(this);
-                decl->ATTR(sym)->value_v=decl->init->ATTR(value);
-                
+                decl->ATTR(sym)->value_v=decl->init->ATTR(value);   
                 tr->genAssign(decl->ATTR(sym)->getTemp(),decl->init->ATTR(val));
             }
-        }
-        
-        
+        }  
     }
     
-    if(decl->lian!=NULL){
-            for(ast::DouList::iterator it=decl->lian->begin();
-            it!=decl->lian->end();++it){
+    if(decl->var_list!=NULL){
+            for(ast::DouList::iterator it=decl->var_list->begin();
+            it!=decl->var_list->end();++it){
                 (*it)->accept(this);
             }
         }

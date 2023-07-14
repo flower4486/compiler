@@ -218,7 +218,6 @@ void RiscvDesc::emitPieces(scope::GlobalScope *gscope, Piece *ps,
     while (NULL != ps) {
         switch (ps->kind) {
         case Piece::FUNCTY:
-        
             emitFuncty(ps->as.functy);
             break;
 
@@ -493,53 +492,7 @@ void RiscvDesc::emitCallTac(RiscvInstr::OpCode op,Tac *t) {
     //将call指令后面liveout入栈
 
     spillDirtyRegs(t->LiveOut);
-    //Set<Temp>* liveness = t->LiveOut->clone();
-
-    // {
-    //     int cnt = 0;
-    //     for(auto temp : *liveness){
-    //         cnt -= 4;
-    //         int r1 = getRegForRead(temp, 0, t->LiveOut);
-    //         addInstr(RiscvInstr::SW,  _reg[r1], _reg[RiscvReg::SP], NULL, cnt, EMPTY_STR, NULL);
-    //     }
-    //     addInstr(RiscvInstr::ADDI, _reg[RiscvReg::SP], _reg[RiscvReg::SP], NULL, cnt, EMPTY_STR, NULL);
-    // }
-    //参数传递
-    // int count = 0,count1=0;
-    // Tac *it = t->prev;
-    // while (it != NULL)
-    // {
-    //     if(it->op_code == Tac::PUSH){
-    //         count += 4;
-    //     }
-    //     it = it->prev;
-    // }
     
-    //for(Tac *it = t->prev; it != NULL && it->op_code == Tac::PUSH; it = it->prev) count += 4,count1++;
-    // int count=canlian.size()*4;
-    // int cnt = count;
-    // addInstr(RiscvInstr::ADDI, _reg[RiscvReg::SP], _reg[RiscvReg::SP], NULL, -count, EMPTY_STR, NULL);
-
-    // for(auto item:canlian){
-    //     cnt -= 4;
-    //     int r1 = getRegForRead(item.op0.var, 0, item.LiveOut);
-    //     addInstr(RiscvInstr::SW,  _reg[r1], _reg[RiscvReg::SP], NULL, cnt, EMPTY_STR, NULL);
-    // }
-    // canlian.clear();
-    // if(count > 0){
-        
-    //     addInstr(RiscvInstr::ADDI, _reg[RiscvReg::SP], _reg[RiscvReg::SP], NULL, -count, EMPTY_STR, NULL);
-    //     int cnt = count;
-    //     for(Tac *it = t->prev; it != NULL && it->op_code == Tac::PUSH; it = it->prev){
-    //         cnt -= 4;
-    //         int r1 = getRegForRead(it->op0.var, 0, it->LiveOut);
-    //         addInstr(RiscvInstr::SW,  _reg[r1], _reg[RiscvReg::SP], NULL, cnt, EMPTY_STR, NULL);
-    //     }
-        // for(int i=0;i<count1;i++){
-        //     emitPushTac(t);
-        //}
-    //}
-    //int count += liveness->size() * 4;
     if(t->op1.label->str_form=="getint"||
         t->op1.label->str_form=="getch"||
         t->op1.label->str_form=="getarray"||
@@ -558,17 +511,6 @@ void RiscvDesc::emitCallTac(RiscvInstr::OpCode op,Tac *t) {
         addInstr(op, NULL, NULL, NULL, 0, std::string("_") + t->op1.label->str_form, NULL);
     }
     
-    
-    // //栈恢复过程
-    // {
-    //     int cnt = 0;
-    //     addInstr(RiscvInstr::ADDI, _reg[RiscvReg::SP], _reg[RiscvReg::SP], NULL, count, EMPTY_STR, NULL);
-    //     for(auto temp: *liveness){
-    //         cnt -= 4;
-    //         int r1 = getRegForWrite(temp, 0, 0, t->LiveOut);
-    //         addInstr(RiscvInstr::LW,  _reg[r1], _reg[RiscvReg::SP], NULL, cnt, EMPTY_STR, NULL);
-    //     }
-    // }
     //将结果送到指定的寄存器
     int r0 = getRegForWrite(t->op0.var, 0, 0, t->LiveOut);
     addInstr(RiscvInstr::MOVE, _reg[r0], _reg[RiscvReg::A0], NULL, 0, EMPTY_STR, NULL);

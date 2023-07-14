@@ -290,7 +290,7 @@ void BasicBlock::analyzeLiveness(void) {
         case Tac::BNOT:
         case Tac::LOAD:
             if (NULL != t_next->op0.var)
-                t->LiveOut->remove(t_next->op0.var);
+            t->LiveOut->remove(t_next->op0.var);
             t->LiveOut->add(t_next->op1.var);
             break;
 

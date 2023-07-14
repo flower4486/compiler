@@ -28,10 +28,10 @@ VarDecl::VarDecl(std::string n, Type *t, DouList *li,Location *l) {
     //quanju = t;
     init = NULL;
     const1=0;
-    lian=li;
-    if(lian!=NULL){
-        for(ast::DouList::iterator it=lian->begin();
-        it!=lian->end();++it){
+    var_list=li;
+    if(var_list!=NULL){
+        for(ast::DouList::iterator it=var_list->begin();
+        it!=var_list->end();++it){
             (*it)->type=t;
         }
     }
@@ -46,10 +46,10 @@ VarDecl::VarDecl(std::string n, Type *t, Expr *i, DouList *li,Location *l) {
     //quanju=t;
     const1=0;
     init = i;
-    lian=li;
-    if(lian!=NULL){
-        for(ast::DouList::iterator it=lian->begin();
-        it!=lian->end();++it){
+    var_list=li;
+    if(var_list!=NULL){
+        for(ast::DouList::iterator it=var_list->begin();
+        it!=var_list->end();++it){
             (*it)->type=t;
         }
     }
@@ -63,7 +63,7 @@ VarDecl::VarDecl(std::string n, Location *l) {
     //type = quanju;
     type = NULL;
     init = NULL;
-    lian=NULL;
+    var_list=NULL;
     const1=0;
 }
 
@@ -73,7 +73,7 @@ VarDecl::VarDecl(std::string n, Expr *i, Location *l) {
     //type = quanju;
     type = NULL;
     init = i;
-    lian=NULL;
+    var_list=NULL;
     const1=0;
 }
 
@@ -86,18 +86,18 @@ VarDecl::VarDecl(std::string n, Type *t, Location *l) {
     type = t;
     init = NULL;
     
-    lian=NULL;
+    var_list=NULL;
     const1=0;
 }
 VarDecl::VarDecl(std::string a,std::string n, Type *t, Location *l) {
 
     setBasicInfo(VAR_DECL, l);
-    can=1;
+    isparameter=1;
     name = n;
     type = t;
     init = NULL;
     
-    lian=NULL;
+    var_list=NULL;
     const1=0;
 }
 VarDecl::VarDecl(std::string n, Type *t, IndexExpr * ld,DimList1 *rd, DouList *li,Location *l) {
@@ -109,10 +109,10 @@ VarDecl::VarDecl(std::string n, Type *t, IndexExpr * ld,DimList1 *rd, DouList *l
     init = NULL;
     ldim=ld;
     rdim=rd;
-    lian=li;
+    var_list=li;
     const1=0;
-    if(lian!=NULL){
-        for(ast::DouList::iterator it=lian->begin();it!=lian->end();it++){
+    if(var_list!=NULL){
+        for(ast::DouList::iterator it=var_list->begin();it!=var_list->end();it++){
             (*it)->type=t;
         }
     }
@@ -127,10 +127,10 @@ VarDecl::VarDecl(std::string n, Type *t, IndexExpr * ld, DouList *li,Location *l
     init = NULL;
     ldim=ld;
     rdim=NULL;
-    lian=li;
+    var_list=li;
     const1=0;
-    if(lian!=NULL){
-        for(ast::DouList::iterator it=lian->begin();it!=lian->end();it++){
+    if(var_list!=NULL){
+        for(ast::DouList::iterator it=var_list->begin();it!=var_list->end();it++){
             (*it)->type=t;
         }
     }
@@ -145,7 +145,7 @@ VarDecl::VarDecl(std::string n,IndexExpr *ld,  DimList1 * rd, Location *l) {
     init = NULL;
     ldim=ld;
     rdim=rd;
-    lian=NULL;
+    var_list=NULL;
     const1=0;
 }
 
@@ -159,7 +159,7 @@ VarDecl::VarDecl(std::string n,IndexExpr *ld,  Location *l) {
     init = NULL;
     ldim=ld;
     rdim=NULL;
-    lian=NULL;
+    var_list=NULL;
     const1=0;
 }
 VarDecl::VarDecl(std::string const1,std::string n, Type *t, Expr *i, DouList *li,Location *l) {
@@ -171,10 +171,10 @@ VarDecl::VarDecl(std::string const1,std::string n, Type *t, Expr *i, DouList *li
     //quanju=t;
     this->const1=1;
     init = i;
-    lian=li;
-    if(lian!=NULL){
-        for(ast::DouList::iterator it=lian->begin();
-        it!=lian->end();++it){
+    var_list=li;
+    if(var_list!=NULL){
+        for(ast::DouList::iterator it=var_list->begin();
+        it!=var_list->end();++it){
             (*it)->type=t;
             (*it)->const1=1;
         }
@@ -191,10 +191,10 @@ VarDecl::VarDecl(std::string const1,std::string n, Type *t, IndexExpr * ld,DimLi
     init = NULL;
     ldim=ld;
     rdim=rd;
-    lian=li;
+    var_list=li;
     this->const1=1;
-    if(lian!=NULL){
-        for(ast::DouList::iterator it=lian->begin();it!=lian->end();it++){
+    if(var_list!=NULL){
+        for(ast::DouList::iterator it=var_list->begin();it!=var_list->end();it++){
             (*it)->type=t;
             (*it)->const1=1;
         }

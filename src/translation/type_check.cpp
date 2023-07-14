@@ -477,15 +477,18 @@ void SemPass2::visit(ast::CallExpr *ref) {
         ref->name=="putch"||
         ref->name=="putarray"||
         ref->name=="starttime"||
-        ref->name=="stoptime")){
-            if(ref->elist->length()!=v->getType()->numOfParameters()){
+        ref->name=="stoptime"))
+        {
+        if(ref->elist->length()!=v->getType()->numOfParameters())
+        {
                 issue(ref->getLocation(),new SymbolNotFoundError(ref->name));
-            }
-                for(auto item:*(ref->elist)){
-                    item->accept(this);
-                    expect(item,*iter1);
-                    ++iter1;
-            }
+        }
+        for(auto item:*(ref->elist))
+        {
+            item->accept(this);
+            expect(item,*iter1);
+            ++iter1;
+        }
         }
     else{
         for(auto item:*(ref->elist)){
@@ -525,9 +528,9 @@ void SemPass2::visit(ast::VarDecl *decl) {
         decl->init->accept(this);
     //如果他是常量
     
-    if(decl->lian!=NULL){
-        for(ast::DouList::iterator it=decl->lian->begin();
-        it!=decl->lian->end();++it){
+    if(decl->var_list!=NULL){
+        for(ast::DouList::iterator it=decl->var_list->begin();
+        it!=decl->var_list->end();++it){
             (*it)->accept(this);
         }
     }    

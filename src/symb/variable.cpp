@@ -37,7 +37,7 @@ Variable::Variable(std::string n, Type *t, Location *l) {
     mark = 0;
     con_val=0;
 }
-Variable::Variable(std::string n, Type *t, ast::DimList *dim, ast::DimList *rd, std::int16_t con, Location *l) {
+Variable::Variable(std::string n, Type *t, ast::DimList *dim, ast::DimList *rd, std::int16_t isconst, Location *l) {
     mind_assert(NULL != t);
 
     name = n;
@@ -50,7 +50,7 @@ Variable::Variable(std::string n, Type *t, ast::DimList *dim, ast::DimList *rd, 
     attached = NULL;
     rdim=rd;
     this->dim = dim;
-    iscon=con;
+    iscon=isconst;
     mark = 0;
     con_val=0;
 }

@@ -144,9 +144,10 @@ static int markBasicBlocks(Tac *t) {
     bool at_start = false;
 
     for (; t != NULL; t = t->next) {
-        t->bb_num = index;
+        t->bb_num = index;//第一个tac编号赋值为-1
 
         // detects ending
+        //遍历tac列表，找到基本块标志
         switch (t->op_code) {
         case Tac::RETURN:
         case Tac::JUMP:
@@ -162,7 +163,6 @@ static int markBasicBlocks(Tac *t) {
                 t->prev->next = t->next; // we know t->prev cannot be NULL
                 if (NULL != t->next)
                     t->next->prev = t->prev;
-
             } else {
                 // target label: starts a new basic block
                 if (!at_start) {
@@ -373,7 +373,6 @@ void FlowGraph::simplify(void) {
     }
 
     // this is a demo, so we don't do the above steps iteratively
-
     // shrinks the flow graph (and adjusts the block numbers)
     std::unordered_map<int, int> new_num; // old bb_num -> new bb_num
     int sz = 0;                           // new size

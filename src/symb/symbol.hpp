@@ -89,7 +89,7 @@ class Variable : public Symbol {
     int con_val;
     int value_v;
     Variable(std::string n, type::Type *t, Location *l);
-    Variable(std::string n, type::Type *t, ast::DimList *dim,ast::DimList *rdim,std::int16_t con, Location *l);
+    Variable(std::string n, type::Type *t, ast::DimList *dim,ast::DimList *rdim,std::int16_t isconst, Location *l);
     // Sets the parameter flag
     void setParameter(void);
     // Tests whether it is a parameter
