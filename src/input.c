@@ -1,13 +1,9 @@
 int main()
 {
-   int a;
-    a = -1;
-
-    a=!1;
-
-    a = ~1;
-
-    return 0;
-
-    
+    int a;
+    if(a==0){
+        return 1;
+    }else{
+        return 0;
+    }
 }
