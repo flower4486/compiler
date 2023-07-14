@@ -26,10 +26,10 @@ for i in $(ls $TEST_DIR/*.sy); do
 
   # 运行测试
   qemu-riscv64 $OUTPUT_DIR/test
-  echo $?
-  /usr/bin/time -f "%e" qemu-riscv64 $OUTPUT_DIR/test 
+  echo "$filename return $?"
+  /usr/bin/time -f "cost time %e" qemu-riscv64 $OUTPUT_DIR/test
   # if [ $? -ne 0 ]; then
-  #   #echo "Execution failed for file: $filename"
+  #   echo "Execution failed for file: $filename"
   #   echo $?
   # else
   #   /usr/bin/time -f "%e" qemu-riscv64 $OUTPUT_DIR/test 
