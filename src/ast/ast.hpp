@@ -205,33 +205,33 @@ class VarDecl : public Statement {
     
 
     VarDecl(std::string name, Type *type,  Location *l);
-    VarDecl(std::string can,std::string name, Type *type,  Location *l);
+    VarDecl(std::string isparameter,std::string name, Type *type,  Location *l);
     VarDecl(std::string name, Location *l);
-    VarDecl(std::string name, Type *type, DouList *lian,Location *l);
-    VarDecl(std::string name, Type *type, Expr *init, DouList *lian,Location *l);
+    VarDecl(std::string name, Type *type, DouList *var_list,Location *l);
+    VarDecl(std::string name, Type *type, Expr *init, DouList *var_list,Location *l);
     VarDecl(std::string name, Expr *init, Location *l);
 
-    VarDecl(std::string name, Type *type, IndexExpr *ldim,DimList1 *rdim, DouList *lian,Location *l);
-    VarDecl(std::string name, Type *type,IndexExpr *ldim,DouList *lian,Location *l);
+    VarDecl(std::string name, Type *type, IndexExpr *ldim,DimList1 *rdim, DouList *var_list,Location *l);
+    VarDecl(std::string name, Type *type,IndexExpr *ldim,DouList *var_list,Location *l);
     VarDecl(std::string name, IndexExpr *ldim,DimList1 *rdim,Location *l);
     VarDecl(std::string name,IndexExpr *ldim,Location *l);
 
-    VarDecl(std::string const1,std::string name, Type *type, Expr *init, DouList *lian,Location *l);
-    VarDecl(std::string const1,std::string name, Type *type, IndexExpr *ldim,DimList1 *rdim, DouList *lian,Location *l);
+    VarDecl(std::string const1,std::string name, Type *type, Expr *init, DouList *var_list,Location *l);
+    VarDecl(std::string const1,std::string name, Type *type, IndexExpr *ldim,DimList1 *rdim, DouList *var_list,Location *l);
     virtual void accept(Visitor *);
     virtual void dumpTo(std::ostream &);
 
   public:
     std::string name;
     Type *type;
-    Expr *init;
-    DouList *lian;
+    Expr *init;//初始化表达式
+    DouList *var_list;
     symb::Variable *ATTR(sym); // for semantic analysis
-    IndexExpr *ldim;
+    IndexExpr *ldim;//
     DimList1 *rdim;
     DimList *rrdim;
     std::int16_t const1;
-    int can=0;
+    int isparameter=0;
 };
 
 //大胆的尝试

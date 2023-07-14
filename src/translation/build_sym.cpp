@@ -261,52 +261,44 @@ void SemPass1::visit(ast::CompStmt *c) {
  */
 void SemPass1::visit(ast::VarDecl *vdecl) {
     Type *t = NULL;
+    // 1. 调用类型的accept方法进行类型分析
     vdecl->type->accept(this);
+    // 2. 如果有右值维度,进行右值维度的分析
     if(vdecl->rdim!=NULL){
         vdecl->rrdim=new ast::DimList();
+        // 遍历右值维度表达式,进行语义分析并记录常量值
         for(auto it=vdecl->rdim->begin();it!=vdecl->rdim->end();it++){
             (*it)->accept(this);
             // std::cout<<(*it)->ATTR(con_v)<<" ";
             vdecl->rrdim->append((*it)->ATTR(con_v));
         }
     }
-    
+    // 3. 如果有左值维度 
     if(vdecl->ldim!=NULL){
         con_b=true;
         vdecl->ldim->accept(this);
+         // 3.1 计算数组长度
         int length = 1;
         for(int d : *(vdecl->ldim->ATTR(dim1))){
             length *= d;
         }
+         // 3.2 检查是否为0长度数组
         if(length == 0){
             issue(vdecl->getLocation(), new ZeroLengthedArrayError());
             return ;
         }
         // std::cout<<length;
         int d=vdecl->ldim->ATTR(dim1)->length();
-        
+          // 3.3 将类型换成数组类型
         vdecl->type->ATTR(type) = new ArrayType(vdecl->type->ATTR(type), length,d);
     }
     con_b=false;
-    // if(vdecl->ldim != NULL) {
-    //     int length = 1;
-    //     for(int d : *(vdecl->ldim)){
-    //         length *= d;
-    //     }
-    //     if(length == 0){
-    //         issue(vdecl->getLocation(), new ZeroLengthedArrayError());
-    //         return ;
-    //     }
-    //     int d=vdecl->ldim->length();
-    //     vdecl->type->ATTR(type) = new ArrayType(vdecl->type->ATTR(type), length,d);
-    // }
-
     
-    if(vdecl->can){
+    if(vdecl->isparameter){
         // ast::DimList *a=new ast::DimList();
         vdecl->type->ATTR(type) = new ArrayType(vdecl->type->ATTR(type), 10,1);
         // Type *mm=new ArrayType(vdecl->type->ATTR(type), 10,1);
-        // v=new Variable(vdecl->name, mm, NULL,NULL,con,vdecl->getLocation());
+        // v=new Variable(vdecl->name, mm, NULL,NULL,isconst,vdecl->getLocation());
     }
     t = vdecl->type->ATTR(type);
     // TODO: Add a new symbol to a scope
@@ -316,17 +308,18 @@ void SemPass1::visit(ast::VarDecl *vdecl) {
     // 3. Declare the symbol in `scopes`
     // 4. Special processing for global variables
     // 5. Tag the symbol to `vdecl->ATTR(sym)`
-    std::int16_t con=vdecl->const1;
+    std::int16_t isconst=vdecl->const1;
     Variable *v;
+    // 5. 创建变量符号并检查重定义
     if(vdecl->ldim==NULL){
-        v=new Variable(vdecl->name, t,NULL,vdecl->rrdim,con,vdecl->getLocation());
+        v=new Variable(vdecl->name, t,NULL,vdecl->rrdim,isconst,vdecl->getLocation());
     }
-    
     else{
-        v=new Variable(vdecl->name, t, vdecl->ldim->ATTR(dim1),vdecl->rrdim,con,vdecl->getLocation());
+        v=new Variable(vdecl->name, t, vdecl->ldim->ATTR(dim1),vdecl->rrdim,isconst,vdecl->getLocation());
     }
-    // Variable *v=new Variable(vdecl->name, t, vdecl->ldim->ATTR(dim1),vdecl->rdim,con,vdecl->getLocation());
-    if(con){
+    // Variable *v=new Variable(vdecl->name, t, vdecl->ldim->ATTR(dim1),vdecl->rdim,isconst,vdecl->getLocation());
+    // 4. 如果是常量声明,记录常量值
+    if(isconst){
         if(vdecl->rdim==NULL){
             if(vdecl->init!=NULL){
                 con_b=true;
@@ -336,12 +329,13 @@ void SemPass1::visit(ast::VarDecl *vdecl) {
             con_b=false;
         }
         else{
+            //按维度初始化数组，把解析的大括号内容扫进去
             int t=1;
             for(auto it=vdecl->rrdim->begin();it!=vdecl->rrdim->end();it++){
                 conv[vdecl->name+std::to_string(t)]=(*it);
                 t++;
             }
-
+            //未初始化的数组维度自动置位0
             while(t<(((ArrayType *)(vdecl->type->ATTR(type)))->getLength())){
                 conv[vdecl->name+std::to_string(t)]=0;
                 t++;
@@ -349,10 +343,9 @@ void SemPass1::visit(ast::VarDecl *vdecl) {
         }
         
     }
-    if(vdecl->can){
+    if(vdecl->isparameter){
         // ast::DimList *a=new ast::DimList();
-        
-        v=new Variable(vdecl->name, t, NULL,NULL,con,vdecl->getLocation());
+        v=new Variable(vdecl->name, t, NULL,NULL,isconst,vdecl->getLocation());
     }
     
     vdecl->ATTR(sym) = v;
@@ -362,14 +355,10 @@ void SemPass1::visit(ast::VarDecl *vdecl) {
     else
         scopes->declare(vdecl->ATTR(sym));
         
-    // //为全局变量赋初值
-    // if(v->isGlobalVar()){
-    //     v->setGlobalInit(0);
-    // }
-    
-    if(vdecl->lian!=NULL)
-    {   for(ast::DouList::iterator it=vdecl->lian->begin();
-        it!=vdecl->lian->end();++it){
+    //变量定义语句的后续变量
+    if(vdecl->var_list!=NULL)
+    {   for(ast::DouList::iterator it=vdecl->var_list->begin();
+        it!=vdecl->var_list->end();++it){
             (*it)->accept(this);
         }
     }
@@ -411,8 +400,7 @@ void SemPass1::visit(ast::AddExpr *e) {
         e->e1->accept(this);
         e->e2->accept(this);
         e->ATTR(con_v)=e->e1->ATTR(con_v)+e->e2->ATTR(con_v);
-    }
-    
+    } 
 }
 
 void SemPass1::visit(ast::SubExpr *e) {
@@ -448,11 +436,8 @@ void SemPass1::visit(ast::LvalueExpr *e){
             std::string temp=((ast::VarRef *)e->lvalue)->var;
             e->ATTR(con_v)=conv[temp];
         }
-    }
-    
-    
+    }   
 }
-
 void SemPass1::visit(ast::NegExpr *e) {
     e->e->accept(this);
 
@@ -462,269 +447,5 @@ void SemPass1::visit(ast::NegExpr *e) {
 void SemPass1::visit(ast::DivExpr *e) {
     e->e1->accept(this);
     e->e2->accept(this);
-
-    
     e->ATTR(con_v)=e->e1->ATTR(con_v)/e->e2->ATTR(con_v);
 }
-///////////////////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////
-
-// void SemPass1::visit(ast::IndexExpr *e) {
-//     e->ATTR(dim1)=new ast::DimList();
-//     for(auto c : *(e->expr_list)){
-//         if(c->getKind()==mind::ast::ASTNode::NodeType::LVALUE_EXPR){
-//             Symbol *v = scopes->lookup(((ast::VarRef *)((ast::LvalueExpr *)c)->lvalue)->var, ((ast::VarRef *)((ast::LvalueExpr *)c)->lvalue)->getLocation());
-//             if(v->iscon){
-//                 c->ATTR(value)=((symb::Variable *)v)->con_val;
-//             }
-//             else{
-//                 mind_assert(false);
-//             }
-            
-//         }
-//         else{
-//             c->accept(this);
-//         }
-//         e->ATTR(dim1)->append(c->ATTR(value));
-        
-//     }
-        
-// }
-
-// void SemPass1::visit(ast::AddExpr *e) {
-//     e->e1->accept(this);
-//     e->e2->accept(this);
-
-    
-//     e->ATTR(value)=e->e1->ATTR(value)+e->e2->ATTR(value);
-// }
-
-// /* Translating an ast::SubExor node.
-//  */
-// void SemPass1::visit(ast::SubExpr *e) {
-//     e->e1->accept(this);
-//     e->e2->accept(this);
-
-//     e->ATTR(value)=e->e1->ATTR(value)-e->e2->ATTR(value);
-// }
-
-
-// /* Translating an ast::MulExpr node.
-//  */
-// void SemPass1::visit(ast::MulExpr *e) {
-//     e->e1->accept(this);
-//     e->e2->accept(this);
-
-//     e->ATTR(value)=e->e1->ATTR(value)*e->e2->ATTR(value);
-// }
-
-// /* Translating an ast::LesExpr node.
-//  */
-// void SemPass1::visit(ast::LesExpr *e) {
-//     e->e1->accept(this);
-//     e->e2->accept(this);
-
-//     if(e->e1->ATTR(value)<e->e2->ATTR(value)) e->ATTR(value)=1;
-//     else e->ATTR(value)=0;
-// }
-
-// /* Translating an ast::GrtExpr node.
-//  */
-// void SemPass1::visit(ast::GrtExpr *e) {
-//     e->e1->accept(this);
-//     e->e2->accept(this);
-
-//     if(e->e1->ATTR(value)>e->e2->ATTR(value)) e->ATTR(value)=1;
-//     else e->ATTR(value)=0;
-// }
-
-// /* Translating an ast::LeqExpr node.
-//  */
-// void SemPass1::visit(ast::LeqExpr *e) {
-//     e->e1->accept(this);
-//     e->e2->accept(this);
-
-//     if(e->e1->ATTR(value)<=e->e2->ATTR(value)) e->ATTR(value)=1;
-//     else e->ATTR(value)=0;
-// }
-
-// /* Translating an ast::GeqExpr node.
-//  */
-// void SemPass1::visit(ast::GeqExpr *e) {
-//     e->e1->accept(this);
-//     e->e2->accept(this);
-
-//     if(e->e1->ATTR(value)>=e->e2->ATTR(value)) e->ATTR(value)=1;
-//     else e->ATTR(value)=0;
-// }
-
-
-// /* Translating an ast::EquExpr node.
-//  */
-// void SemPass1::visit(ast::EquExpr *e) {
-//     e->e1->accept(this);
-//     e->e2->accept(this);
-
-//     if(e->e1->ATTR(value)==e->e2->ATTR(value)) e->ATTR(value)=1;
-//     else e->ATTR(value)=0;
-// }
-
-// /* Translating an ast::NeqExpr node.
-//  */
-// void SemPass1::visit(ast::NeqExpr *e) {
-//     e->e1->accept(this);
-//     e->e2->accept(this);
-
-//     if(e->e1->ATTR(value)!=e->e2->ATTR(value)) e->ATTR(value)=1;
-//     else e->ATTR(value)=0;
-// }
-
-// /* Translating an ast::AndExpr node.
-//  */
-// void SemPass1::visit(ast::AndExpr *e) {
-
-//     e->e1->accept(this);
-    
-//     e->e2->accept(this);
-
-//     e->ATTR(value)=e->e1->ATTR(value)&&e->e2->ATTR(value);
-// }
-
-// /* Translating an ast::OrExpr node.
-//  */
-// void SemPass1::visit(ast::OrExpr *e) {
-   
-//     e->e1->accept(this);
-    
-//     e->e2->accept(this);
-    
-//     e->ATTR(value)=e->e1->ATTR(value)||e->e2->ATTR(value);
-// }
-// /* Translating an ast::DivExpr node.
-//  */
-// void SemPass1::visit(ast::DivExpr *e) {
-//     e->e1->accept(this);
-//     e->e2->accept(this);
-
-    
-//     e->ATTR(value)=e->e1->ATTR(value)/e->e2->ATTR(value);
-// }
-
-
-// /* Translating an ast::ModExpr node.
-//  */
-// void SemPass1::visit(ast::ModExpr *e) {
-//     e->e1->accept(this);
-//     e->e2->accept(this);
-
-
-//     e->ATTR(value)=e->e1->ATTR(value)%e->e2->ATTR(value);
-// }
-
-
-// /* Translating an ast::IntConst node.
-//  */
-// void SemPass1::visit(ast::IntConst *e) {
-//     e->ATTR(value)=e->value;
-// }
-
-// /* Translating an ast::NegExpr node.
-//  */
-// void SemPass1::visit(ast::NegExpr *e) {
-//     e->e->accept(this);
-
-//     e->ATTR(value)=-(e->e->ATTR(value));
-// }
-// /* Translating an ast::NotExpr node.
-//  */
-// void SemPass1::visit(ast::NotExpr *e) {
-//     e->e->accept(this);
-
-
-//     e->ATTR(value)=~(e->e->ATTR(value));
-// }
-// /* Translating an ast::BitNotExpr node.
-//  */
-// void SemPass1::visit(ast::BitNotExpr *e) {
-//     e->e->accept(this);
-
-
-//     e->ATTR(value)=!(e->e->ATTR(value));
-
-// }
-
-////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////
-
-
-/* Translating an ast::LvalueExpr node.
- *
- * NOTE:
- *   different Lvalue kinds need different translation
- */
-// void SemPass1::visit(ast::LvalueExpr *e) {
-//     // TODO
-//     e->lvalue->accept(this);
-//     e->ATTR(value)=((ast::VarRef *)e->lvalue)->m;
-// //     e->lvalue->accept(this);
-// //     switch (e->lvalue->getKind()) {
-// //         case ast::ASTNode::VAR_REF:{
-// //             ast::VarRef *ref = (ast::VarRef *)e->lvalue;
-// //             // if(ref->ATTR(sym)->iscon){
-// //             //     e->ATTR(val) = tr->genLoad(temp, 0);
-// //             // }
-// //             if(ref->ATTR(sym)->iscon){
-// //                     e->ATTR(value) = ref->ATTR(sym)->con_val;
-// //             }
-// //             else{
-// //                 mind_assert(false);
-// //             }
-            
-// //             break;
-// //         }
-// //         default:
-// //             mind_assert(false);
-// //     }
-// }
-
-
-
-// void SemPass1::visit(ast::VarRef *ref) {
-    
-//     // switch (ref->ATTR(lv_kind)) {
-//     // case ast::Lvalue::SIMPLE_VAR:
-//     //     // nothing to do
-//     //     break;
-//     // case ast::Lvalue::ARRAY_ELE:
-//     //     ref->ldim->accept(this);
-//     //     break;
-//     // default:
-//     //     mind_assert(false); // impossible
-//     // }
-//     // // actually it is so simple :-)
-
-//     Symbol *v = scopes->lookup(ref->var, ref->getLocation());
-//     if (NULL == v) {
-//         issue(ref->getLocation(), new SymbolNotFoundError(ref->var));
-//          mind_assert(false);
-
-//     } else if (!v->isVariable()) {
-//         issue(ref->getLocation(), new NotVariableError(v));
-//         mind_assert(false);
-
-//     } else {
-//         auto a = (Variable *)v;
-        
-//         if(a->iscon){
-//             ref->m=a->con_val;
-//         }
-//         else{
-//             mind_assert(false);
-//         }
-        
-        
-// }
-// }
-
